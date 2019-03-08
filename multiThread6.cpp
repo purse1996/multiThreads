@@ -5,23 +5,23 @@
 #include <deque>
 #include <condition_variable>
 
-// Éú²úÕßºÍÏû·ÑÕßÄ£ĞÍ¡£Ê¹ÓÃcondition±äÁ¿À´¼õÉÙµÈ´ıÊ±¼ä
+// ç”Ÿäº§è€…å’Œæ¶ˆè´¹è€…æ¨¡å‹ã€‚ä½¿ç”¨conditionå˜é‡æ¥å‡å°‘ç­‰å¾…æ—¶é—´
 
 std::deque<int> q;
 std::mutex mu;
-std::condition_variable cond; //Ê¹ÓÃÌõ¼ş±äÁ¿
+std::condition_variable cond; //ä½¿ç”¨æ¡ä»¶å˜é‡
 void producer()
 {
 	int count = 10;
 	{
 		while (count > 0)
 		{
-			std::unique_lock<std::mutex> qlock(mu);
+			std::unique_lock<std::mutex> qlock(mu); // ç”±äºè¿™é‡Œéœ€è¦é¢‘ç¹çš„ä¸ºäº’æ–¥å¯¹è±¡åŠ é”å’Œè§£é”ï¼Œæ‰€ä»¥åªèƒ½ä½¿ç”¨unique_lockè€Œélock_guard
 			q.push_front(count);
 			qlock.unlock();
-			cond.notify_one(); //Í¨ÖªÆäËûµÈ´ıµÄÒ»¸öÏß³Ì
-			//cond.notify_all(); //Í¨ÖªÕıÔÚµÈ´ıµÄÆäËûËùÓĞÏß³Ì£»
-			std::this_thread::sleep_for(std::chrono::seconds(1)); // Ïß³ÌµÈ´ı
+			cond.notify_one(); //é€šçŸ¥å…¶ä»–ç­‰å¾…çš„ä¸€ä¸ªçº¿ç¨‹
+			//cond.notify_all(); //é€šçŸ¥æ­£åœ¨ç­‰å¾…çš„å…¶ä»–æ‰€æœ‰çº¿ç¨‹ï¼›
+			std::this_thread::sleep_for(std::chrono::seconds(1)); // çº¿ç¨‹ç­‰å¾…
 			count--;
 		}
 	}
@@ -32,9 +32,10 @@ void consumer()
 	while (data != 1)
 	{
 		std::unique_lock<std::mutex> ulock(mu);
-		// ·ÀÖ¹ÓÉÓÚÆäËûÔ­Òò±ÈÈç³¬Ê±Ö®ÀàµÄÔì³ÉµÄÎ±¼¤»î£¬ËùÒÔÒıÈëÁËÒ»¸ölambdaº¯Êı.
+		// é˜²æ­¢ç”±äºå…¶ä»–åŸå› æ¯”å¦‚è¶…æ—¶ä¹‹ç±»çš„é€ æˆçš„ä¼ªæ¿€æ´»ï¼Œæ‰€ä»¥å¼•å…¥äº†ä¸€ä¸ªlambdaå‡½æ•°.
 		// cond.wait(ulock);
-		cond.wait(ulock, []() {return !q.empty(); });
+		// cond.waitåœ¨æ˜¯ä½¿ç”¨é¦–å…ˆå°†äº’æ–¥å¯¹è±¡è§£é”ï¼Œç„¶åæ‰èƒ½è¿›å…¥çº¿ç¨‹ç­‰å¾…ï¼Œæœ€ååœ¨ä¸ºäº’æ–¥åŠ é”ï¼Œå› æ­¤åªèƒ½ä½¿ç”¨unique_lock
+		cond.wait(ulock, []() {return !q.empty(); }); 
 		data = q.front(); 
 		q.pop_back();
 		std::cout << data << std::endl;
